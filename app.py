@@ -10,6 +10,14 @@ ACCESS_TOKEN = os.environ["META_ACCESS_TOKEN"]
 FB_PAGE_ID = os.environ["FB_PAGE_ID"]
 INSTAGRAM_ID = os.environ["INSTAGRAM_ID"]
 
+# Telegram Credentials
+BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
+CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
+
+def send_telegram_msg(text):
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    requests.post(url, data={"chat_id": CHAT_ID, "text": text, "parse_mode": "Markdown"})
+
 def fetch_latest_posts():
     posts = []
     
@@ -40,25 +48,32 @@ def fetch_latest_posts():
 # Main Process
 latest_posts = fetch_latest_posts()
 
-for post in latest_posts:
-    model = genai.GenerativeModel('gemini-3.6-flash')
-    prompt = f"""
-    You are an automated social media policy inspector.
-    Analyze this {post['source']} post for policy violations such as hate speech, violence, harassment, sexual content, or misinformation.
+if not latest_posts:
+    send_telegram_msg("ℹ️ **දිනපතා පරීක්ෂාව:** අද දින Facebook හෝ Instagram හි අලුත් පෝස්ට් කිසිවක් හමු නොවීය.")
+else:
+    violations_found = False
+    
+    for post in latest_posts:
+        model = genai.GenerativeModel('gemini-3.6-flash')
+        prompt = f"""
+        You are an automated social media policy inspector.
+        Analyze this {post['source']} post for policy violations such as hate speech, violence, harassment, sexual content, or misinformation.
 
-    Post Content: "{post['text']}"
+        Post Content: "{post['text']}"
 
-    Respond ONLY with a clear summary in Sinhala language if there is a violation or risk.
-    If there is a violation, include the word "VIOLATION_FOUND" in your response.
-    """
+        Respond ONLY with a clear summary in Sinhala language if there is a violation or risk.
+        If there is a violation, include the word "VIOLATION_FOUND" in your response.
+        If there are NO violations, respond EXACTLY with "NO_VIOLATION".
+        """
 
-    response = model.generate_content(prompt)
-    result_text = response.text
+        response = model.generate_content(prompt)
+        result_text = response.text
 
-    if "VIOLATION_FOUND" in result_text:
-        bot_token = os.environ["TELEGRAM_BOT_TOKEN"]
-        chat_id = os.environ["TELEGRAM_CHAT_ID"]
-        message = f"⚠️ **{post['source']} Policy Violation Alert!**\n\n{result_text}\n\n**Original Post:** {post['text']}"
-        
-        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-        requests.post(url, data={"chat_id": chat_id, "text": message})
+        if "VIOLATION_FOUND" in result_text:
+            violations_found = True
+            msg = f"⚠️ **{post['source']} Policy Violation Alert!**\n\n{result_text}\n\n**Original Post:** {post['text']}"
+            send_telegram_msg(msg)
+
+    # කිසිදු ගැටලුවක් නැතිනම් All Clear Message එක යැවීම
+    if not violations_found:
+        send_telegram_msg("✅ **දිනපතා පරීක්ෂාව අවසන්:** ඔබගේ මෑත පෝස්ට් වල කිසිදු ප්‍රතිපත්ති උල්ලංඝනයක් (Policy Violation) හමු නොවීය. All Clear! 👍")
