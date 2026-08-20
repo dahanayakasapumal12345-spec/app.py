@@ -1,25 +1,32 @@
-name: Daily Social Media Policy Check
+name: Daily Social Media Check
 
 on:
   schedule:
-    - cron: '0 2 * * *' # දිනපතා ක්‍රියාත්මක වීමට (UTC time)
-  workflow_dispatch:
+    - cron: '0 2 * * *' # දිනපතා UTC 02:00 (ශ්‍රී ලංකා වේලාවෙන් පෙ.ව. 7:30 ට)
+  workflow_dispatch: # ඔබට අවශ්‍ය විට manually run කිරීමට
 
 jobs:
-  build:
+  inspect-posts:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
-      - name: Install dependencies
+          python-version: '3.10'
+
+      - name: Install Dependencies
         run: |
           pip install google-generativeai requests
-      - name: Run Script
+
+      - name: Run Policy Checker
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
+          INSTAGRAM_ID: ${{ secrets.INSTAGRAM_ID }}
         run: python app.py
