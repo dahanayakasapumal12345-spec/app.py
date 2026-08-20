@@ -41,7 +41,7 @@ def fetch_latest_posts():
 latest_posts = fetch_latest_posts()
 
 for post in latest_posts:
-    model = genai.GenerativeModel('gemini-2.5-flash')
+    model = genai.GenerativeModel('gemini-3.6-flash')
     prompt = f"""
     You are an automated social media policy inspector.
     Analyze this {post['source']} post for policy violations such as hate speech, violence, harassment, sexual content, or misinformation.
