@@ -99,7 +99,7 @@ else:
                 local_filename = "temp_video.mp4"
                 if download_file(post['media_url'], local_filename):
                     print("Uploading Video to Gemini File API...")
-                    uploaded_file = genai.upload_file(path=local_filename)
+                    uploaded_file = genai.upload_file(path=local_filename, api_key=os.environ["GEMINI_API_KEY"])
                     # Wait for processing
                     while uploaded_file.state.name == "PROCESSING":
                         time.sleep(2)
@@ -108,7 +108,7 @@ else:
             elif 'image' in post['media_type'] or 'photo' in post['media_type']:
                 local_filename = "temp_image.jpg"
                 if download_file(post['media_url'], local_filename):
-                    uploaded_file = genai.upload_file(path=local_filename)
+                    uploaded_file = genai.upload_file(path=local_filename, api_key=os.environ["GEMINI_API_KEY"])
                     contents.append(uploaded_file)
 
         # Prompt for Multimodal Analysis
