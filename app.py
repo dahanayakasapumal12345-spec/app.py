@@ -88,7 +88,7 @@ else:
     violations_found = False
     
     for post in latest_posts:
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-3.6-flash')
         contents = []
         uploaded_file = None
         local_filename = None
