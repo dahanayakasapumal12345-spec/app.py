@@ -93,7 +93,8 @@ if not latest_posts:
     send_telegram_msg("ℹ️ **දිනපතා පරීක්ෂාව:** අද දින Facebook හෝ Instagram හි අලුත් පෝස්ට් කිසිවක් හමු නොවීය.")
 else:
     violations_found = False
-    
+    checked_posts_summary = []  # පරීක්ෂා කළ පෝස්ට් වල විස්තර එකතු කිරීමට
+
     for post in latest_posts:
         contents = []
         uploaded_file = None
@@ -141,9 +142,13 @@ else:
             )
             result_text = response.text
 
+            # පෝස්ට් එකේ විස්තර කෙටි සාරාංශයකට එකතු කිරීම
+            post_preview = post['text'][:60] + "..." if len(post['text']) > 60 else post['text']
+            checked_posts_summary.append(f"• **{post['source']}**: \"{post_preview}\"")
+
             if "VIOLATION_FOUND" in result_text:
                 violations_found = True
-                msg = f"⚠️ **{post['source']} Policy Violation Alert! (Text/Image/Video Inspection)**\n\n{result_text}\n\n**Original Caption:** {post['text']}"
+                msg = f"⚠️ **{post['source']} Policy Violation Alert!**\n\n{result_text}\n\n**Original Caption:** {post['text']}"
                 send_telegram_msg(msg)
         except Exception as err:
             print(f"Gemini Analysis Error: {err}")
@@ -157,6 +162,12 @@ else:
         if local_filename and os.path.exists(local_filename):
             os.remove(local_filename)
 
-    # All Clear Message
+    # All Clear Message සමඟ පරීක්ෂා කළ පෝස්ට් වල ලැයිස්තුව යැවීම
     if not violations_found:
-        send_telegram_msg("✅ **දිනපතා පරීක්ෂාව අවසන්:** ඔබගේ මෑත පෝස්ට් වල (Text, Photos, සහ Videos) කිසිදු ප්‍රතිපත්ති උල්ලංඝනයක් (Policy Violation) හමු නොවීය. All Clear! 👍")
+        summary_text = "\n".join(checked_posts_summary)
+        msg = (
+            f"✅ **දිනපතා පරීක්ෂාව අවසන්:**\n"
+            f"ඔබගේ මෑත පෝස්ට් වල කිසිදු ප්‍රතිපත්ති උල්ලංඝනයක් (Policy Violation) හමු නොවීය. All Clear! 👍\n\n"
+            f"📋 **පරීක්ෂා කරන ලද පෝස්ට්:**\n{summary_text}"
+        )
+        send_telegram_msg(msg)
