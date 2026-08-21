@@ -33,9 +33,13 @@ def fetch_latest_posts():
     
     # 1. Fetch Latest Facebook Post
     try:
-        fb_url = f"https://graph.facebook.com/v19.0/{FB_PAGE_ID}/published_posts?fields=message,attachments{{media_type,media,subattachments}}&limit=5&access_token={ACCESS_TOKEN}"
+        fb_url = f"https://graph.facebook.com/v19.0/{FB_PAGE_ID}/published_posts?fields=message,created_time,attachments{{media_type,media,subattachments}}&limit=5&access_token={ACCESS_TOKEN}"
         fb_res = requests.get(fb_url).json()
-        if 'data' in fb_res and len(fb_res['data']) > 0:
+        
+        # Meta API Error එකක් ආවොත් print කරන්න
+        if 'error' in fb_res:
+            print(f"FB API Error: {fb_res['error'].get('message')}")
+        elif 'data' in fb_res and len(fb_res['data']) > 0:
             post_data = fb_res['data'][0]
             msg = post_data.get('message', '')
             media_url = None
@@ -60,9 +64,12 @@ def fetch_latest_posts():
 
     # 2. Fetch Latest Instagram Post
     try:
-        ig_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_ID}/media?fields=caption,media_type,media_url&limit=5&access_token={ACCESS_TOKEN}"
+        ig_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_ID}/media?fields=caption,media_type,media_url,timestamp&limit=5&access_token={ACCESS_TOKEN}"
         ig_res = requests.get(ig_url).json()
-        if 'data' in ig_res and len(ig_res['data']) > 0:
+        
+        if 'error' in ig_res:
+            print(f"IG API Error: {ig_res['error'].get('message')}")
+        elif 'data' in ig_res and len(ig_res['data']) > 0:
             post_data = ig_res['data'][0]
             caption = post_data.get('caption', '')
             media_url = post_data.get('media_url')
