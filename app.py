@@ -31,56 +31,55 @@ def download_file(url, filename):
 def fetch_latest_posts():
     posts = []
     
-    # 1. Fetch Latest Facebook Post
+    # 1. Fetch Latest Facebook Posts (පෝස්ට් 5ම ලබා ගැනීමට loop එකක් භාවිත කෙරේ)
     try:
         fb_url = f"https://graph.facebook.com/v19.0/{FB_PAGE_ID}/published_posts?fields=message,created_time,attachments{{media_type,media,subattachments}}&limit=5&access_token={ACCESS_TOKEN}"
         fb_res = requests.get(fb_url).json()
         
-        # Meta API Error එකක් ආවොත් print කරන්න
         if 'error' in fb_res:
             print(f"FB API Error: {fb_res['error'].get('message')}")
-        elif 'data' in fb_res and len(fb_res['data']) > 0:
-            post_data = fb_res['data'][0]
-            msg = post_data.get('message', '')
-            media_url = None
-            media_type = 'text'
+        elif 'data' in fb_res:
+            for post_data in fb_res['data']: # සාර්ථකව පෝස්ට් එකිනෙක පරික්ශා කිරීම
+                msg = post_data.get('message', '')
+                media_url = None
+                media_type = 'text'
 
-            if 'attachments' in post_data and 'data' in post_data['attachments']:
-                attachment = post_data['attachments']['data'][0]
-                media_type = attachment.get('media_type', 'text')
-                if 'media' in attachment and 'image' in attachment['media']:
-                    media_url = attachment['media']['image'].get('src')
-                elif 'media' in attachment and 'source' in attachment['media']:
-                    media_url = attachment['media'].get('source')
+                if 'attachments' in post_data and 'data' in post_data['attachments']:
+                    attachment = post_data['attachments']['data'][0]
+                    media_type = attachment.get('media_type', 'text')
+                    if 'media' in attachment and 'image' in attachment['media']:
+                        media_url = attachment['media']['image'].get('src')
+                    elif 'media' in attachment and 'source' in attachment['media']:
+                        media_url = attachment['media'].get('source')
 
-            posts.append({
-                "source": "Facebook",
-                "text": msg,
-                "media_url": media_url,
-                "media_type": media_type
-            })
+                posts.append({
+                    "source": "Facebook",
+                    "text": msg,
+                    "media_url": media_url,
+                    "media_type": media_type
+                })
     except Exception as e:
         print(f"FB Fetch Error: {e}")
 
-    # 2. Fetch Latest Instagram Post
+    # 2. Fetch Latest Instagram Posts
     try:
         ig_url = f"https://graph.facebook.com/v19.0/{INSTAGRAM_ID}/media?fields=caption,media_type,media_url,timestamp&limit=5&access_token={ACCESS_TOKEN}"
         ig_res = requests.get(ig_url).json()
         
         if 'error' in ig_res:
             print(f"IG API Error: {ig_res['error'].get('message')}")
-        elif 'data' in ig_res and len(ig_res['data']) > 0:
-            post_data = ig_res['data'][0]
-            caption = post_data.get('caption', '')
-            media_url = post_data.get('media_url')
-            media_type = post_data.get('media_type', 'IMAGE').lower()
+        elif 'data' in ig_res:
+            for post_data in ig_res['data']: # සාර්ථකව පෝස්ට් එකිනෙක පරික්ශා කිරීම
+                caption = post_data.get('caption', '')
+                media_url = post_data.get('media_url')
+                media_type = post_data.get('media_type', 'IMAGE').lower()
 
-            posts.append({
-                "source": "Instagram",
-                "text": caption,
-                "media_url": media_url,
-                "media_type": media_type
-            })
+                posts.append({
+                    "source": "Instagram",
+                    "text": caption,
+                    "media_url": media_url,
+                    "media_type": media_type
+                })
     except Exception as e:
         print(f"IG Fetch Error: {e}")
 
