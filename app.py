@@ -106,10 +106,19 @@ else:
                 if download_file(post['media_url'], local_filename):
                     print("Uploading Video to Gemini File API...")
                     uploaded_file = client.files.upload(file=local_filename)
-                    while uploaded_file.state.name == "PROCESSING":
-                        time.sleep(2)
+                    attempts = 0
+                while uploaded_file.state.name == "PROCESSING" and attempts < 20:
+                    time.sleep(3)
+                    attempts += 1
+                    try:
                         uploaded_file = client.files.get(name=uploaded_file.name)
+                    except Exception as file_err:
+                        print(f"Temporary Gemini API error (Retrying...): {file_err}")
+                
+                if uploaded_file.state.name == "ACTIVE":
                     contents.append(uploaded_file)
+                else:
+                    print(f"Video processing failed or timed out. State: {uploaded_file.state.name}")
             elif 'image' in post['media_type'] or 'photo' in post['media_type']:
                 local_filename = "temp_image.jpg"
                 if download_file(post['media_url'], local_filename):
